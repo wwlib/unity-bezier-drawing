@@ -111,7 +111,6 @@ public class Bezier : MonoBehaviour
             // position.x /= 10;
             // position.y /= 10;
             lineVertices2D[i].Set(position.x, position.y);
-            Logger.Log("lineVert: (" + lineVertices2D[i].x + ", " + lineVertices2D[i].y + ")");
         }
 
         Vector2[] vertices2D = lineVertices2D;
@@ -137,7 +136,6 @@ public class Bezier : MonoBehaviour
             Vector2 vertex = vertices[i];
             float x = (vertex.x + 5.12f) / 10.24f;
             float y = 1.0f - (vertex.y - 3.84f) / -07.68f;
-            Logger.Log("uv: (" + x + ", " + y + ")");
             uv[i] = new Vector2(x, y);
         }
 
@@ -154,5 +152,4 @@ public class Bezier : MonoBehaviour
 
         filter.mesh = msh;
     }
-
 }
