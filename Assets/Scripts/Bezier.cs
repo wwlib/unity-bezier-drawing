@@ -1,17 +1,26 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.IO;
 [RequireComponent(typeof(LineRenderer))]
+
+public class PolygonData {
+    public string name;
+    public int vertexCount;
+    public Vector2[] vertices;
+}
+
+
 public class Bezier : MonoBehaviour
 {
     public Transform[] controlPoints;
     public LineRenderer lineRenderer;
-    public Button generateMeshButton;
+    public Button saveButton;
     public Material material;
 
     private int curveCount = 0;
     private int layerOrder = 0;
-    private int SEGMENT_COUNT = 50;
+    private int SEGMENT_COUNT = 20;
 
     private MeshRenderer meshRenderer;
     private MeshFilter filter;
@@ -27,9 +36,9 @@ public class Bezier : MonoBehaviour
         curveCount = (int)controlPoints.Length / 3;
 
         // Button btn1 = button.GetComponent<Button>();
-        // btn1.onClick.AddListener(TaskOnClick);
+        // btn1.onClick.AddListener(SaveOnClick);
 
-        generateMeshButton.onClick.AddListener(TaskOnClick);
+        saveButton.onClick.AddListener(SaveOnClick);
     }
 
     void Update()
@@ -39,10 +48,27 @@ public class Bezier : MonoBehaviour
         triangulateLine();
     }
 
-    void TaskOnClick()
+    void SaveOnClick()
     {
-        Debug.Log("Generating mesh!");
-        triangulateLine();
+        Debug.Log("Saving!");
+        int pointCount = lineRenderer.positionCount - 1; // skip last point which is the same as the first
+        PolygonData polygonData = new PolygonData();
+        polygonData.name = "pig-polygon";
+        polygonData.vertexCount = pointCount;
+        polygonData.vertices = new Vector2[pointCount];
+        for (int i=0; i<pointCount; i++) {
+            Vector2 position = lineRenderer.GetPosition(i);
+            polygonData.vertices[i].Set(position.x, position.y);
+        }
+
+        string filename = polygonData.name + ".json";
+        string filePath = Path.Combine(Application.streamingAssetsPath, filename);
+        string str = JsonUtility.ToJson(polygonData);
+        using (FileStream fs = new FileStream(filePath, FileMode.Create)){
+            using (StreamWriter writer = new StreamWriter(fs)){
+                writer.Write(str);
+            }
+        }
     }
 
     void DrawCurve()
@@ -53,7 +79,12 @@ public class Bezier : MonoBehaviour
             {
                 float t = i / (float)SEGMENT_COUNT;
                 int nodeIndex = j * 3;
-                Vector3 pixel = CalculateCubicBezierPoint(t, controlPoints [nodeIndex].position, controlPoints [nodeIndex + 1].position, controlPoints [nodeIndex + 2].position, controlPoints [nodeIndex + 3].position);
+                Vector3 pixel = CalculateCubicBezierPoint(t,
+                    controlPoints [nodeIndex].position,
+                    controlPoints [nodeIndex + 1].position,
+                    controlPoints [nodeIndex + 2].position,
+                    controlPoints [nodeIndex + 3].position
+                );
                 lineRenderer.SetVertexCount(((j * SEGMENT_COUNT) + i));
                 lineRenderer.SetPosition((j * SEGMENT_COUNT) + (i - 1), pixel);
             }
@@ -102,7 +133,7 @@ public class Bezier : MonoBehaviour
 
         int pointCount = lineRenderer.positionCount - 1; // skip last point which is the same as the first
         Vector2[] lineVertices2D = new Vector2[pointCount];
-        Vector2 firstPoint = lineRenderer.GetPosition(0);
+        // Vector2 firstPoint = lineRenderer.GetPosition(0);
         // Logger.Log("firstPoint: (" + firstPoint.x + ", " + firstPoint.y + ")");
         for (int i=0; i<pointCount; i++) {
             Vector2 position = lineRenderer.GetPosition(i);

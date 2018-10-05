@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 public class BitmapQuad : MonoBehaviour {
 
@@ -92,12 +93,24 @@ public class BitmapQuad : MonoBehaviour {
 			Color32 teal = new Color32(0, 128, 128, 255);
 			Color32 transparent = new Color32(0, 0, 0, 0);
 
-			Vector2[] polygon = new Vector2[] {
-				new Vector2(100, 100),
-				new Vector2(200, 100),
-				new Vector2(200, 200),
-				new Vector2(100, 200)
-			};
+			// Vector2[] polygon = new Vector2[] {
+			// 	new Vector2(100, 100),
+			// 	new Vector2(200, 100),
+			// 	new Vector2(200, 200),
+			// 	new Vector2(100, 200)
+			// };
+
+			PolygonData polygonData = loadPolygon("pig-polygon.json");
+			Vector2[] polygon = polygonData.vertices;
+	        for (int i=0; i<polygon.Length; i++) {
+	            // Vector2 vertex = polygon[i];
+				float x = polygon[i].x;
+				float y = polygon[i].y;
+				x = x * 100.0f + 512.0f;
+				y = y * 100.0f + 384.0f;
+	            polygon[i].x = x;
+				polygon[i].y = y;
+	        }
 
 			int index = 0;
 			for (int y = 0; y < texture.height; y++)
@@ -105,7 +118,7 @@ public class BitmapQuad : MonoBehaviour {
 				for (int x = 0; x < texture.width; x++)
 				{
 					// data[index] = ((x & y) == 0 ? sourceData[index] : transparent);
-					if (IsPointInPolygon4(polygon, new Vector2(x,y))) {
+					if (!IsInPolygon(polygon, new Vector2(x ,y))) {
 						data[index] = transparent;
 					} else {
 						data[index] = sourceData[index];
@@ -190,5 +203,32 @@ public class BitmapQuad : MonoBehaviour {
 	    }
 
 	    return inside;
+	}
+
+	public PolygonData loadPolygon(string filename)
+	{
+	  // Path.Combine combines strings into a file path
+	  // Application.StreamingAssets points to Assets/StreamingAssets in the Editor, and the StreamingAssets folder in a build
+	  string filePath = Path.Combine(Application.streamingAssetsPath, filename);
+	  PolygonData loadedPolygonData = null;
+
+	  if(File.Exists(filePath))
+	  {
+		// Read the json from the file into a string
+		string dataAsJson = File.ReadAllText(filePath);
+		Debug.Log(dataAsJson);
+		// Pass the json to JsonUtility, and tell it to create a GameData object from it
+		loadedPolygonData = JsonUtility.FromJson<PolygonData>(dataAsJson);
+
+		// Retrieve the allRoundData property of loadedPolygonData
+		string polygonName = loadedPolygonData.name;
+		Debug.Log(polygonName);
+	  }
+	  else
+	  {
+		Debug.LogError("Cannot load polygon data!");
+	  }
+
+	  return loadedPolygonData;
 	}
 }
